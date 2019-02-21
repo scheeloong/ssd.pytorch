@@ -31,6 +31,12 @@ class Detect(Function):
             prior_data: (tensor) Prior boxes and variances from priorbox layers
                 Shape: [1,num_priors,4]
         """
+        '''
+        print("locData", loc_data)
+        print("conf", conf_data)
+        print("prior", prior_data)
+        print("locDataSize", loc_data.size())
+        '''
         num = loc_data.size(0)  # batch size
         num_priors = prior_data.size(0)
         output = torch.zeros(num, self.num_classes, self.top_k, 5)
@@ -46,10 +52,19 @@ class Detect(Function):
             for cl in range(1, self.num_classes):
                 c_mask = conf_scores[cl].gt(self.conf_thresh)
                 scores = conf_scores[cl][c_mask]
-                if scores.dim() == 0:
+                #print("Scores Dimension are:", scores.dim())
+                #print("Scores Size(0) are:", scores.size(0))
+                #if scores.dim() == 0:
+                if scores.size(0) == 0:
                     continue
                 l_mask = c_mask.unsqueeze(1).expand_as(decoded_boxes)
                 boxes = decoded_boxes[l_mask].view(-1, 4)
+                '''
+                print("Boxes:", boxes)
+                print("scores:", scores)
+                print("thresh:", self.nms_thresh)
+                print("topK:", self.top_k)
+                '''
                 # idx of highest scoring and non-overlapping boxes per class
                 ids, count = nms(boxes, scores, self.nms_thresh, self.top_k)
                 output[i, cl, :count] = \
